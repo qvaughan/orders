@@ -1,6 +1,8 @@
 package com.app
 
+import com.app.offer.OfferService
 import com.app.order.Order
+import com.app.order.LineItem
 import java.math.BigDecimal
 
 /**
@@ -20,15 +22,16 @@ interface OrderService {
 /**
  * Default implementation of OrderService
  */
-class DefaultOrderService : OrderService {
+class DefaultOrderService(val offerService: OfferService) : OrderService {
 
     private val prices = mapOf("apple" to BigDecimal(".60"), "orange" to BigDecimal(".25"))
 
     override fun submitOrder(order: List<String>): Order {
-        val cost = order.fold(BigDecimal.ZERO) { acc, item ->
-            acc.add(prices[item.toLowerCase()] ?: BigDecimal.ZERO)
-        }
-        return Order(order, cost)
+        val productItems = order.map { LineItem(it, prices[it.toLowerCase()] ?: BigDecimal.ZERO) }
+        val offerItems = offerService.findOffers(productItems)
+        val items = productItems + offerItems
+        val cost = items.fold(BigDecimal.ZERO) { acc, item -> acc + item.price }
+        return Order(items, cost)
     }
 
 }
