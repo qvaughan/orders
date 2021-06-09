@@ -11,6 +11,7 @@ interface OrderTerminalView {
      */
     fun promptForOrder()
 
+    fun showOrderCompleted(order: Order)
 }
 
 
@@ -23,4 +24,7 @@ class DefaultOrderTerminalView : OrderTerminalView {
         println("Enter order or q to quit:")
     }
 
+    override fun showOrderCompleted(order: Order) {
+        println("Order completed: $order")
+    }
 }

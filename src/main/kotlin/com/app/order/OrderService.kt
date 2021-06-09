@@ -1,9 +1,11 @@
 package com.app
 
+import com.app.event.EventsService
 import com.app.offer.OfferService
 import com.app.order.Order
 import com.app.order.LineItem
 import java.math.BigDecimal
+import java.time.LocalDate
 
 /**
  * Service for processing Orders
@@ -22,7 +24,7 @@ interface OrderService {
 /**
  * Default implementation of OrderService
  */
-class DefaultOrderService(val offerService: OfferService) : OrderService {
+class DefaultOrderService(val offerService: OfferService, val eventsService: EventsService) : OrderService {
 
     private val prices = mapOf("apple" to BigDecimal(".60"), "orange" to BigDecimal(".25"))
 
@@ -31,7 +33,9 @@ class DefaultOrderService(val offerService: OfferService) : OrderService {
         val offerItems = offerService.findOffers(productItems)
         val items = productItems + offerItems
         val cost = items.fold(BigDecimal.ZERO) { acc, item -> acc + item.price }
-        return Order(items, cost)
+        val result = Order(items, cost, LocalDate.now().plusDays(3))
+        eventsService.orderCompleted(result)
+        return result
     }
 
 }

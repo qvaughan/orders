@@ -1,25 +1,25 @@
 package com.app.order
 
 import com.app.DefaultOrderService
+import com.app.event.EventsService
 import com.app.offer.OfferService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 import java.math.BigDecimal
 
 class DefaultOrderServiceTest {
 
     lateinit var orderService: DefaultOrderService
     lateinit var mockOfferService: OfferService
+    lateinit var eventsService: EventsService
 
     @BeforeEach
     fun beforeEach() {
         mockOfferService = mock()
-        orderService = DefaultOrderService(mockOfferService)
+        eventsService = mock()
+        orderService = DefaultOrderService(mockOfferService, eventsService)
     }
 
     @Test
@@ -44,6 +44,13 @@ class DefaultOrderServiceTest {
         val order = listOf("Apple", "Apple", "Orange", "Orange")
         val orderResponse = orderService.submitOrder(order)
         assertThat(orderResponse.items).contains(offerItem)
+    }
+
+    @Test
+    fun `notify events service when order is completed`() {
+        val order = listOf("Apple", "Apple", "Orange", "Orange")
+        val orderResponse = orderService.submitOrder(order)
+        verify(eventsService).orderCompleted(orderResponse)
     }
 
 }

@@ -1,12 +1,16 @@
 package com.app.order
 
 import com.app.OrderService
+import com.app.event.DefaultEventsService
+import com.app.event.EventsService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.io.InputStream
+import java.math.BigDecimal
+import java.time.LocalDate
 
 class DefaultOrderTerminalControllerTest {
 
@@ -14,6 +18,7 @@ class DefaultOrderTerminalControllerTest {
     lateinit var orderView: OrderTerminalView
     lateinit var orderController: DefaultOrderTerminalController
     lateinit var mockInputStream: InputStream
+    lateinit var eventsService: EventsService
 
     @BeforeEach
     fun beforeEach(){
@@ -21,7 +26,8 @@ class DefaultOrderTerminalControllerTest {
         System.setIn(mockInputStream)
         orderView = mock()
         orderService = mock()
-        orderController = DefaultOrderTerminalController(orderView, orderService)
+        eventsService = DefaultEventsService()
+        orderController = DefaultOrderTerminalController(orderView, orderService, eventsService)
     }
 
     @Test
@@ -38,6 +44,13 @@ class DefaultOrderTerminalControllerTest {
         "Apple, Apple, Orange, Apple\nq\n".fold(whenever(mockInputStream.read())) { mock, char -> mock.thenReturn(char.toInt()) }
         orderController.start()
         verify(orderService).submitOrder(listOf("Apple", "Apple", "Orange", "Apple"))
+    }
+
+    @Test
+    fun `call order view to print order complete message when called by event service`(){
+        val order = Order(listOf(LineItem("Apple", BigDecimal(".60"))), BigDecimal(".60"), LocalDate.now().plusDays(3))
+        eventsService.orderCompleted(order)
+        verify(orderView).showOrderCompleted(order)
     }
 
 }
