@@ -33,7 +33,7 @@ class DefaultOrderService(val offerService: OfferService, val eventsService: Eve
         val productItems = mutableListOf<LineItem>()
         try {
             order.mapTo(productItems) {
-                val price = inventoryService.pick(it) ?: throw Exception("Not enough $it for order.")
+                val price = inventoryService.pick(it) ?: throw Exception("Not enough $it for order: $order.")
                 LineItem(it, price)
             }
         } catch (e: Exception) {
