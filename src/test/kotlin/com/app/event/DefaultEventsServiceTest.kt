@@ -13,20 +13,29 @@ import java.time.LocalDate
 class DefaultEventsServiceTest {
 
     lateinit var eventsService: DefaultEventsService
-    lateinit var mockEventSubscriber: OrderCompleteEventSubscriber
-
+    lateinit var mockOrderCompleteSubscriber: OrderCompleteEventSubscriber
+    lateinit var mockOrderFailedSubscriber: OrderFailedEventSubscriber
+    
     @BeforeEach
     fun beforeEach() {
         eventsService = DefaultEventsService()
-        mockEventSubscriber = mock()
+        mockOrderCompleteSubscriber = mock()
+        mockOrderFailedSubscriber = mock()
     }
 
     @Test
     fun `notify subscribers when an order is processed successfully`() {
-        eventsService.subscribe(mockEventSubscriber)
+        eventsService.subscribe(mockOrderCompleteSubscriber)
         val order = Order(listOf(LineItem("Apple", BigDecimal(".60"))), BigDecimal(".60"), LocalDate.now().plusDays(3))
         eventsService.orderCompleted(order)
-        verify(mockEventSubscriber, timeout(5000)).orderCompleted(order)
+        verify(mockOrderCompleteSubscriber, timeout(5000)).orderCompleted(order)
+    }
+    
+    @Test
+    fun `notify subscribers when an order fails`() {
+        eventsService.subscribe(mockOrderFailedSubscriber)
+        eventsService.orderFailed("DUMMY MESSAGE")
+        verify(mockOrderFailedSubscriber, timeout(5000)).orderFailed("DUMMY MESSAGE")
     }
 
 }

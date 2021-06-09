@@ -3,6 +3,7 @@ package com.app.order
 import com.app.OrderService
 import com.app.event.EventsService
 import com.app.event.OrderCompleteEventSubscriber
+import com.app.event.OrderFailedEventSubscriber
 
 /**
  * Controller for submitting orders from the terminal.
@@ -19,7 +20,7 @@ interface OrderTerminalController {
 /**
  * Default implementation for the OrderTerminalController
  */
-class DefaultOrderTerminalController(val orderView: OrderTerminalView, val orderService: OrderService, val eventsService: EventsService) : OrderTerminalController, OrderCompleteEventSubscriber {
+class DefaultOrderTerminalController(val orderView: OrderTerminalView, val orderService: OrderService, val eventsService: EventsService) : OrderTerminalController, OrderCompleteEventSubscriber, OrderFailedEventSubscriber {
 
     init {
         eventsService.subscribe(this)
@@ -39,5 +40,9 @@ class DefaultOrderTerminalController(val orderView: OrderTerminalView, val order
 
     override fun orderCompleted(order: Order) {
         orderView.showOrderCompleted(order)
+    }
+
+    override fun orderFailed(msg: String) {
+        orderView.showOrderFailed(msg)
     }
 }

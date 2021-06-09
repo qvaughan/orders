@@ -1,6 +1,8 @@
 package com.app
 
 import com.app.event.EventsService
+import com.app.inventory.InventoryItem
+import com.app.inventory.InventoryService
 import com.app.offer.OfferService
 import com.app.order.Order
 import com.app.order.LineItem
@@ -17,19 +19,30 @@ interface OrderService {
      * @param items List of items in order
      * @return The submitted order
      */
-    fun submitOrder(items: List<String>) : Order
+    fun submitOrder(items: List<String>) : Order?
 
 }
 
 /**
  * Default implementation of OrderService
  */
-class DefaultOrderService(val offerService: OfferService, val eventsService: EventsService) : OrderService {
+class DefaultOrderService(val offerService: OfferService, val eventsService: EventsService, val inventoryService: InventoryService) : OrderService {
 
-    private val prices = mapOf("apple" to BigDecimal(".60"), "orange" to BigDecimal(".25"))
 
-    override fun submitOrder(order: List<String>): Order {
-        val productItems = order.map { LineItem(it, prices[it.toLowerCase()] ?: BigDecimal.ZERO) }
+    override fun submitOrder(order: List<String>): Order? {
+        val productItems = mutableListOf<LineItem>()
+        try {
+            order.mapTo(productItems) {
+                val price = inventoryService.pick(it) ?: throw Exception("Not enough $it for order.")
+                LineItem(it, price)
+            }
+        } catch (e: Exception) {
+            productItems.forEach {
+                inventoryService.returnItem(it.item)
+            }
+            eventsService.orderFailed(e.message ?: "Order failed for unknown reason.")
+            return null
+        }
         val offerItems = offerService.findOffers(productItems)
         val items = productItems + offerItems
         val cost = items.fold(BigDecimal.ZERO) { acc, item -> acc + item.price }

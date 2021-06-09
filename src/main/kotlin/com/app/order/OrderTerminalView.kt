@@ -12,6 +12,8 @@ interface OrderTerminalView {
     fun promptForOrder()
 
     fun showOrderCompleted(order: Order)
+
+    fun showOrderFailed(msg: String)
 }
 
 
@@ -26,5 +28,9 @@ class DefaultOrderTerminalView : OrderTerminalView {
 
     override fun showOrderCompleted(order: Order) {
         println("Order completed: $order")
+    }
+
+    override fun showOrderFailed(msg: String) {
+        println("Order failed: $msg")
     }
 }

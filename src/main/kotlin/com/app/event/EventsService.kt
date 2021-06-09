@@ -20,6 +20,8 @@ interface EventsService {
      */
     fun orderCompleted(order: Order)
 
+    fun orderFailed(msg: String)
+
 }
 
 
@@ -31,6 +33,11 @@ class DefaultEventsService : EventsService {
         if (subscriber is OrderCompleteEventSubscriber) {
             subscribers.computeIfAbsent(Event.OrderCompleteEvent) { mutableListOf() }.add(subscriber)
         }
+
+        if (subscriber is OrderFailedEventSubscriber) {
+            subscribers.computeIfAbsent(Event.OrderFailedEvent) { mutableListOf() }.add(subscriber)
+        }
+
     }
 
     override fun orderCompleted(order: Order) {
@@ -40,4 +47,10 @@ class DefaultEventsService : EventsService {
         }
     }
 
+    override fun orderFailed(msg: String) {
+        subscribers.get(Event.OrderFailedEvent)?.forEach {
+           if (it is OrderFailedEventSubscriber)
+               it.orderFailed(msg)
+        }
+    }
 }

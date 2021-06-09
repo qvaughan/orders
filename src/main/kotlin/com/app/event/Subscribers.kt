@@ -7,3 +7,9 @@ interface OrderCompleteEventSubscriber {
     fun orderCompleted(order: Order)
 
 }
+
+interface OrderFailedEventSubscriber {
+
+    fun orderFailed(msg: String)
+
+}

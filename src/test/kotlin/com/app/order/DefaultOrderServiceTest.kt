@@ -2,6 +2,8 @@ package com.app.order
 
 import com.app.DefaultOrderService
 import com.app.event.EventsService
+import com.app.inventory.DefaultInventoryService
+import com.app.inventory.InventoryService
 import com.app.offer.OfferService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -14,19 +16,21 @@ class DefaultOrderServiceTest {
     lateinit var orderService: DefaultOrderService
     lateinit var mockOfferService: OfferService
     lateinit var eventsService: EventsService
+    lateinit var inventoryService: InventoryService
 
     @BeforeEach
     fun beforeEach() {
         mockOfferService = mock()
         eventsService = mock()
-        orderService = DefaultOrderService(mockOfferService, eventsService)
+        inventoryService = DefaultInventoryService()
+        orderService = DefaultOrderService(mockOfferService, eventsService, inventoryService)
     }
 
     @Test
     fun `receive order of three apples and one orange and calculates the order cost is 2 dollars and 5 cents` () {
         val order = listOf("Apple", "Apple", "Orange", "Apple")
         val orderResponse = orderService.submitOrder(order)
-        assertThat(orderResponse.totalCost).isEqualTo(BigDecimal("2.05"))
+        assertThat(orderResponse?.totalCost).isEqualTo(BigDecimal("2.05"))
     }
 
     @Test
@@ -34,7 +38,7 @@ class DefaultOrderServiceTest {
         whenever(mockOfferService.findOffers(any())).thenReturn(listOf(LineItem("Buy one apple get one free", BigDecimal("-.60"))))
         val order = listOf("Apple", "Apple", "Orange", "Orange")
         val orderResponse = orderService.submitOrder(order)
-        assertThat(orderResponse.totalCost).isEqualTo(BigDecimal("1.10"))
+        assertThat(orderResponse?.totalCost).isEqualTo(BigDecimal("1.10"))
     }
 
     @Test
@@ -43,14 +47,22 @@ class DefaultOrderServiceTest {
         whenever(mockOfferService.findOffers(any())).thenReturn(listOf(offerItem))
         val order = listOf("Apple", "Apple", "Orange", "Orange")
         val orderResponse = orderService.submitOrder(order)
-        assertThat(orderResponse.items).contains(offerItem)
+        assertThat(orderResponse?.items).contains(offerItem)
     }
 
     @Test
     fun `notify events service when order is completed`() {
         val order = listOf("Apple", "Apple", "Orange", "Orange")
         val orderResponse = orderService.submitOrder(order)
-        verify(eventsService).orderCompleted(orderResponse)
+        verify(eventsService).orderCompleted(orderResponse!!)
     }
 
+    @Test
+    fun `return items to inventory when an order fails`() {
+        assertThat(inventoryService.remaining("apple")).isEqualTo(5)
+        assertThat(inventoryService.remaining("orange")).isEqualTo(5)
+        val order = listOf("Apple", "Apple", "Orange", "Orange", "apple", "Apple", "Apple", "Apple")
+        assertThat(inventoryService.remaining("apple")).isEqualTo(5)
+        assertThat(inventoryService.remaining("orange")).isEqualTo(5)
+    }
 }

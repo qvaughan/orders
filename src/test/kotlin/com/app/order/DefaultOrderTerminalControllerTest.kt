@@ -53,4 +53,9 @@ class DefaultOrderTerminalControllerTest {
         verify(orderView).showOrderCompleted(order)
     }
 
+    @Test
+    fun `call order view to print order failed message when called by event service`(){
+        eventsService.orderFailed("DUMMY MESSAGE")
+        verify(orderView).showOrderFailed("DUMMY MESSAGE")
+    }
 }
